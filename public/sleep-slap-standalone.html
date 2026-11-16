@@ -370,6 +370,106 @@
         "cruising_5","cruising_6","cruising_7","cruising_8"
       ];
 
+      const BGM_TRACKS = [
+        "/assets/audio/bgm/bgm_1_are_bhai.mp3",
+        "/assets/audio/bgm/bgm_2_angry_amitabh.mp3",
+        "/assets/audio/bgm/bgm_3_main_amitabh.mp3",
+        "/assets/audio/bgm/bgm_4_nahi_maanenge.mp3",
+        "/assets/audio/bgm/bgm_5_gst_bst_cst.mp3",
+        "/assets/audio/bgm/bgm_6_computer_ji.mp3",
+        "/assets/audio/bgm/bgm_7_kyun_bane_crorepati.mp3"
+      ];
+      const BGM_VOLUME = 0.38;
+      let activeBgmEl = null;
+      let bgmTimeout = null;
+      let bgmActive = false;
+      let bgmCurrentIdx = -1;
+
+      function stopBgm() {
+        bgmActive = false;
+        if (bgmTimeout !== null) {
+          clearTimeout(bgmTimeout);
+          bgmTimeout = null;
+        }
+        if (activeBgmEl) {
+          try {
+            activeBgmEl.pause();
+            activeBgmEl.currentTime = 0;
+          } catch {}
+          activeBgmEl = null;
+        }
+      }
+
+      function pauseBgm() {
+        if (bgmTimeout !== null) {
+          clearTimeout(bgmTimeout);
+          bgmTimeout = null;
+        }
+        if (activeBgmEl) {
+          try { activeBgmEl.pause(); } catch {}
+        }
+      }
+
+      function resumeBgm() {
+        if (!bgmActive) return;
+        unlockAudio();
+        if (activeBgmEl && activeBgmEl.paused && !activeBgmEl.ended) {
+          activeBgmEl.play().catch(() => {});
+          return;
+        }
+        if (!bgmTimeout && !activeBgmEl) {
+          playNextBgm();
+        }
+      }
+
+      function startBgm() {
+        bgmActive = true;
+        unlockAudio();
+        if (activeBgmEl && activeBgmEl.paused && !activeBgmEl.ended) {
+          activeBgmEl.play().catch(() => {});
+          return;
+        }
+        if (bgmTimeout !== null) return;
+        playNextBgm();
+      }
+
+      function playNextBgm() {
+        if (!bgmActive) return;
+        if (bgmTimeout !== null) {
+          clearTimeout(bgmTimeout);
+          bgmTimeout = null;
+        }
+        const offset = 1 + Math.floor(Math.random() * (BGM_TRACKS.length - 1));
+        bgmCurrentIdx = (bgmCurrentIdx + offset) % BGM_TRACKS.length;
+        const url = BGM_TRACKS[bgmCurrentIdx];
+
+        if (activeBgmEl) {
+          try { activeBgmEl.pause(); activeBgmEl.currentTime = 0; } catch {}
+          activeBgmEl = null;
+        }
+
+        try {
+          const el = new Audio(url);
+          el.volume = BGM_VOLUME;
+          const onFinish = () => {
+            if (activeBgmEl === el) activeBgmEl = null;
+            if (bgmActive) {
+              const gapMs = 2000 + Math.random() * 2000;
+              bgmTimeout = setTimeout(() => { playNextBgm(); }, gapMs);
+            }
+          };
+          el.addEventListener("ended", onFinish, { once: true });
+          el.addEventListener("error", onFinish, { once: true });
+          activeBgmEl = el;
+          el.play().catch(() => {});
+        } catch {
+          if (bgmActive) {
+            const gapMs = 2000 + Math.random() * 2000;
+            bgmTimeout = setTimeout(() => { playNextBgm(); }, gapMs);
+          }
+        }
+      }
+
       const MAX_MISSES = 3;
       const BEST_KEY = "sleep_slap_best_score";
       const defaultAudioUrls = {
@@ -778,6 +878,7 @@
 
       function startGame() {
         unlockAudio();
+        startBgm();
         score = 0;
         misses = 0;
         scoreVal.textContent = "0";
@@ -794,6 +895,7 @@
 
       function resetGame() {
         stopCruisingAudio();
+        stopBgm();
         score = 0;
         misses = 0;
         scoreVal.textContent = "0";
@@ -810,12 +912,14 @@
       function togglePause() {
         if (state === "playing") {
           stopCruisingAudio();
+          pauseBgm();
           state = "paused";
           document.body.dataset.state = "paused";
           pauseStats.textContent = "SCORE " + score + " · BEST " + best;
           pauseOverlay.classList.remove("hidden");
         } else if (state === "paused") {
           unlockAudio();
+          resumeBgm();
           state = "playing";
           document.body.dataset.state = "playing";
           pauseOverlay.classList.add("hidden");
@@ -892,6 +996,7 @@
           renderMissHud();
           if (misses >= MAX_MISSES) {
             stopCruisingAudio();
+            stopBgm();
             flyer = null;
             respawnTimer = 0;
             state = "gameover";

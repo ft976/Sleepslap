@@ -2,10 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AUDIO_MANIFEST,
+  BGM_TRACKS,
   CRUISING_KEYS,
 } from './types';
 import {
   BASE_FLYER_SPEED_PX,
+  BGM_MAX_GAP_MS,
+  BGM_MIN_GAP_MS,
+  BGM_VOLUME,
   KNOCKOUT_DURATION_MS,
   MAX_AIM_ANGLE_DEG,
   applyMissOutcome,
@@ -13,12 +17,14 @@ import {
   clampAngleDeg,
   computeAimAngleFromDrag,
   computeAimOrigin,
+  computeBgmGapMs,
   computeDifficultyForScore,
   computeRayTopEndpoint,
   createFlyer,
   getBedLayout,
   knockOutFlyer,
   loadBestScore,
+  pickNextBgmIndex,
   saveBestScore,
   stepFlyer,
 } from './physics';
@@ -145,8 +151,8 @@ test('AUDIO_MANIFEST contains all 8 cruising lines, slap SFX, hit punchline, and
     assert.ok(AUDIO_MANIFEST[key].script.length > 0);
   }
   assert.equal(AUDIO_MANIFEST.slap_sfx.filename, 'slap_sfx.mp3');
-  assert.equal(AUDIO_MANIFEST.hit_punchline.script, 'Teri maa ka bhosda!');
-  assert.equal(AUDIO_MANIFEST.miss_reaction.script, 'Arre baap re!');
+  assert.equal(AUDIO_MANIFEST.hit_punchline.script, 'Are maiya!');
+  assert.equal(AUDIO_MANIFEST.miss_reaction.script, 'Chal chal chal!');
 });
 
 test('matchAudioFilenameToKey maps manifest filenames and common aliases cleanly', () => {
@@ -177,4 +183,33 @@ test('createZipBytes and parseZipEntries round-trip audio entries losslessly', a
   assert.deepEqual(parsed[0].data, sampleA);
   assert.equal(parsed[1].name, 'README.txt');
   assert.deepEqual(parsed[1].data, sampleB);
+});
+
+test('BGM playlist contains all 7 Myinstants tracks configured with appropriate volume and 2-4s gap', () => {
+  assert.equal(BGM_TRACKS.length, 7);
+  for (const track of BGM_TRACKS) {
+    assert.ok(track.startsWith('/assets/audio/bgm/'));
+    assert.ok(track.endsWith('.mp3'));
+  }
+
+  // Volume must be noticeably softer than main SFX (0.95)
+  assert.ok(BGM_VOLUME >= 0.3 && BGM_VOLUME <= 0.45);
+
+  // Gap between tracks must strictly range from 2000ms to 4000ms
+  assert.equal(BGM_MIN_GAP_MS, 2000);
+  assert.equal(BGM_MAX_GAP_MS, 4000);
+
+  assert.equal(computeBgmGapMs(0), 2000);
+  assert.equal(computeBgmGapMs(0.5), 3000);
+  assert.equal(computeBgmGapMs(1), 4000);
+
+  // Next track selection avoids back-to-back duplicate if > 1 track
+  for (let current = 0; current < 7; current++) {
+    const nextA = pickNextBgmIndex(current, 7, 0.0);
+    const nextB = pickNextBgmIndex(current, 7, 0.99);
+    assert.notEqual(nextA, current);
+    assert.notEqual(nextB, current);
+    assert.ok(nextA >= 0 && nextA < 7);
+    assert.ok(nextB >= 0 && nextB < 7);
+  }
 });

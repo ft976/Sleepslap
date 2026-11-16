@@ -1,8 +1,14 @@
 import {
   AUDIO_MANIFEST,
+  BGM_TRACKS,
   CRUISING_KEYS,
   type AudioKey,
 } from './types';
+import {
+  BGM_VOLUME,
+  computeBgmGapMs,
+  pickNextBgmIndex,
+} from './physics';
 
 export class GameAudioEngine {
   private ctx: AudioContext | null = null;
@@ -16,14 +22,18 @@ export class GameAudioEngine {
     cruising_7: '/assets/audio/cruising_7.wav',
     cruising_8: '/assets/audio/cruising_8.wav',
     slap_sfx: '/assets/audio/slap_sfx.wav',
-    hit_punchline: '/assets/audio/hit_punchline.wav',
-    miss_reaction: '/assets/audio/miss_reaction.wav',
+    hit_punchline: '/assets/audio/hit_punchline.mp3',
+    miss_reaction: '/assets/audio/miss_reaction.mp3',
     gameover_audio: '/assets/aistudio/mkb_amitabh_bachchan_fa595f97.mp3',
   };
   private customUrls: Partial<Record<AudioKey, string>> = {};
   private preloadedUrls: Set<string> = new Set();
   private activeCruisingAudio: HTMLAudioElement | null = null;
   private activeVoiceAudios: Set<HTMLAudioElement> = new Set();
+  private bgmAudio: HTMLAudioElement | null = null;
+  private bgmTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private bgmActive = false;
+  private bgmCurrentIndex = -1;
   private muted = false;
 
   public preloadAll(): void {
@@ -38,6 +48,18 @@ export class GameAudioEngine {
           el.load();
         } catch {
           // Ignore preload failure in restricted environments
+        }
+      }
+    }
+    for (const url of BGM_TRACKS) {
+      if (!this.preloadedUrls.has(url)) {
+        this.preloadedUrls.add(url);
+        try {
+          const el = new Audio(url);
+          el.preload = 'auto';
+          el.load();
+        } catch {
+          // Ignore
         }
       }
     }
@@ -65,11 +87,121 @@ export class GameAudioEngine {
     if (muted) {
       this.stopCruising();
       this.stopAllVoices();
+      this.pauseBgm();
+    } else if (this.bgmActive) {
+      this.resumeBgm();
     }
   }
 
   public isMuted(): boolean {
     return this.muted;
+  }
+
+  public startBgm(): void {
+    this.bgmActive = true;
+    if (this.muted || typeof Audio === 'undefined') return;
+    this.unlock();
+    if (this.bgmAudio && this.bgmAudio.paused && !this.bgmAudio.ended) {
+      void this.bgmAudio.play().catch(() => {});
+      return;
+    }
+    if (this.bgmTimeoutId !== null) return;
+    this.playNextBgmTrack();
+  }
+
+  public pauseBgm(): void {
+    if (this.bgmTimeoutId !== null) {
+      clearTimeout(this.bgmTimeoutId);
+      this.bgmTimeoutId = null;
+    }
+    if (this.bgmAudio) {
+      try {
+        this.bgmAudio.pause();
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  public resumeBgm(): void {
+    if (!this.bgmActive || this.muted || typeof Audio === 'undefined') return;
+    this.unlock();
+    if (this.bgmAudio && this.bgmAudio.paused && !this.bgmAudio.ended) {
+      void this.bgmAudio.play().catch(() => {});
+      return;
+    }
+    if (this.bgmTimeoutId === null && !this.bgmAudio) {
+      this.playNextBgmTrack();
+    }
+  }
+
+  public stopBgm(): void {
+    this.bgmActive = false;
+    if (this.bgmTimeoutId !== null) {
+      clearTimeout(this.bgmTimeoutId);
+      this.bgmTimeoutId = null;
+    }
+    if (this.bgmAudio) {
+      try {
+        this.bgmAudio.pause();
+        this.bgmAudio.currentTime = 0;
+      } catch {
+        // Ignore
+      }
+      this.bgmAudio = null;
+    }
+  }
+
+  private playNextBgmTrack(): void {
+    if (!this.bgmActive || this.muted || typeof Audio === 'undefined') return;
+    if (this.bgmTimeoutId !== null) {
+      clearTimeout(this.bgmTimeoutId);
+      this.bgmTimeoutId = null;
+    }
+
+    const nextIdx = pickNextBgmIndex(this.bgmCurrentIndex, BGM_TRACKS.length);
+    this.bgmCurrentIndex = nextIdx;
+    const url = BGM_TRACKS[nextIdx];
+
+    if (this.bgmAudio) {
+      try {
+        this.bgmAudio.pause();
+        this.bgmAudio.currentTime = 0;
+      } catch {
+        // Ignore
+      }
+      this.bgmAudio = null;
+    }
+
+    try {
+      const audio = new Audio(url);
+      audio.volume = BGM_VOLUME;
+
+      const onTrackFinished = () => {
+        if (this.bgmAudio === audio) {
+          this.bgmAudio = null;
+        }
+        if (this.bgmActive && !this.muted) {
+          const gapMs = computeBgmGapMs();
+          this.bgmTimeoutId = setTimeout(() => {
+            this.playNextBgmTrack();
+          }, gapMs);
+        }
+      };
+
+      audio.addEventListener('ended', onTrackFinished, { once: true });
+      audio.addEventListener('error', onTrackFinished, { once: true });
+
+      this.bgmAudio = audio;
+      void audio.play().catch(() => {});
+    } catch {
+      if (this.bgmActive && !this.muted) {
+        const gapMs = computeBgmGapMs();
+        this.bgmTimeoutId = setTimeout(() => {
+          this.playNextBgmTrack();
+        }, gapMs);
+      }
+    }
   }
 
   public setCustomAudioUrl(key: AudioKey, url: string | null): void {
@@ -194,6 +326,7 @@ export class GameAudioEngine {
 
   public playGameOver(): void {
     this.unlock();
+    this.stopBgm();
     this.stopAllVoices();
     if (this.muted) return;
 

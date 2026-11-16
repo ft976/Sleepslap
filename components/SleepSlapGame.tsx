@@ -175,6 +175,7 @@ export default function SleepSlapGame() {
   const startGame = useCallback(() => {
     audioRef.current?.stopAllVoices();
     audioRef.current?.unlock();
+    audioRef.current?.startBgm();
     const sim = simRef.current;
     sim.score = 0;
     sim.misses = 0;
@@ -202,6 +203,7 @@ export default function SleepSlapGame() {
 
   const resetToTitle = useCallback(() => {
     audioRef.current?.stopAllVoices();
+    audioRef.current?.stopBgm();
     const sim = simRef.current;
     sim.score = 0;
     sim.misses = 0;
@@ -225,12 +227,14 @@ export default function SleepSlapGame() {
     setGameState((prev) => {
       if (prev === 'playing') {
         audioRef.current?.stopCruising();
+        audioRef.current?.pauseBgm();
         simRef.current.isAiming = false;
         simRef.current.aimPointerId = null;
         return 'paused';
       }
       if (prev === 'paused') {
         audioRef.current?.unlock();
+        audioRef.current?.resumeBgm();
         return 'playing';
       }
       return prev;
@@ -370,6 +374,7 @@ export default function SleepSlapGame() {
       cancelled = true;
       cancelAnimationFrame(rafId);
       engine.stopAllVoices();
+      engine.stopBgm();
     };
   }, [startGame]);
 

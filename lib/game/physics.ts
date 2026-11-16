@@ -10,6 +10,32 @@ export const MICRO_SHAKE_DURATION_MS = 120;
 export const MICRO_SHAKE_AMPLITUDE_PX = 4;
 export const BEST_SCORE_STORAGE_KEY = 'sleep_slap_best_score';
 
+export const BGM_VOLUME = 0.38;
+export const BGM_MIN_GAP_MS = 2000;
+export const BGM_MAX_GAP_MS = 4000;
+
+/**
+ * Computes a random gap between 2000ms and 4000ms (2-4 seconds) between background tracks.
+ */
+export function computeBgmGapMs(randomFactor = Math.random()): number {
+  const clamped = Math.max(0, Math.min(1, randomFactor));
+  return Math.round(BGM_MIN_GAP_MS + clamped * (BGM_MAX_GAP_MS - BGM_MIN_GAP_MS));
+}
+
+/**
+ * Picks the next random BGM index from the playlist, ensuring no back-to-back repeats if >1 track.
+ */
+export function pickNextBgmIndex(
+  currentIndex: number,
+  totalTracks: number,
+  randomFactor = Math.random()
+): number {
+  if (totalTracks <= 1) return 0;
+  const clamped = Math.max(0, Math.min(0.999999, randomFactor));
+  const offset = 1 + Math.floor(clamped * (totalTracks - 1));
+  return (currentIndex + offset) % totalTracks;
+}
+
 /**
  * Clamps the aiming angle in degrees strictly to [-35, +35].
  * 0 deg points straight up (negative Y). Negative = left, Positive = right.

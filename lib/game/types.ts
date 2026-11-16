@@ -22,6 +22,16 @@ export type AudioKey =
   | 'miss_reaction'
   | 'gameover_audio';
 
+export const BGM_TRACKS = [
+  '/assets/audio/bgm/bgm_1_are_bhai.mp3',
+  '/assets/audio/bgm/bgm_2_angry_amitabh.mp3',
+  '/assets/audio/bgm/bgm_3_main_amitabh.mp3',
+  '/assets/audio/bgm/bgm_4_nahi_maanenge.mp3',
+  '/assets/audio/bgm/bgm_5_gst_bst_cst.mp3',
+  '/assets/audio/bgm/bgm_6_computer_ji.mp3',
+  '/assets/audio/bgm/bgm_7_kyun_bane_crorepati.mp3',
+] as const;
+
 export interface AudioManifestEntry {
   key: AudioKey;
   filename: string;
@@ -102,14 +112,14 @@ export const AUDIO_MANIFEST: Record<AudioKey, AudioManifestEntry> = {
     filename: 'hit_punchline.mp3',
     category: 'hit',
     label: 'Hit Impact Voice Line',
-    script: 'Teri maa ka bhosda!',
+    script: 'Are maiya!',
   },
   miss_reaction: {
     key: 'miss_reaction',
     filename: 'miss_reaction.mp3',
     category: 'miss',
     label: 'Miss Reaction Voice Line',
-    script: 'Arre baap re!',
+    script: 'Chal chal chal!',
   },
   gameover_audio: {
     key: 'gameover_audio',
