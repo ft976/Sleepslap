@@ -222,7 +222,10 @@ export function matchAudioFilenameToKey(filename: string): AudioKey | null {
 
   // Manifest filename stem match (e.g., mkb_amitabh_bachchan_fa595f97)
   for (const entry of Object.values(AUDIO_MANIFEST)) {
-    const manifestStem = entry.filename.replace(/\.[^.]+$/, '').toLowerCase();
+    const manifestStem = entry.filename
+      .replace(/\.[^.]+$/, '')
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
     if (stem === manifestStem) {
       return entry.key;
     }
@@ -245,10 +248,15 @@ export function matchAudioFilenameToKey(filename: string): AudioKey | null {
   if (stem.includes('miss') || stem.includes('whoosh')) {
     return 'miss_reaction';
   }
+  if (stem.includes('gamestart') || stem.includes('game_start') || stem.includes('start') || stem.includes('play')) {
+    return 'gamestart_audio';
+  }
   if (
     stem.includes('gameover') ||
     stem.includes('game_over') ||
     stem.includes('lose') ||
+    stem.includes('loose') ||
+    stem.includes('ending') ||
     stem.includes('amitabh') ||
     stem.includes('mkb')
   ) {

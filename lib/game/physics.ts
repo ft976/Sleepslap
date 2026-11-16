@@ -10,7 +10,8 @@ export const MICRO_SHAKE_DURATION_MS = 120;
 export const MICRO_SHAKE_AMPLITUDE_PX = 4;
 export const BEST_SCORE_STORAGE_KEY = 'sleep_slap_best_score';
 
-export const BGM_VOLUME = 0.38;
+export const BGM_VOLUME = 0.52;
+export const HIT_AHH_VOLUME = 0.42;
 export const BGM_MIN_GAP_MS = 2000;
 export const BGM_MAX_GAP_MS = 4000;
 

@@ -135,7 +135,7 @@ export default function SleepSlapGame() {
     simRef.current.status = gameState;
   }, [gameState]);
 
-  const spawnNextFlyer = useCallback((currentScore: number) => {
+  const spawnNextFlyer = useCallback((currentScore: number, playVoice = true) => {
     const sim = simRef.current;
     const flyer = createFlyer({
       id: sim.nextFlyerId++,
@@ -145,7 +145,9 @@ export default function SleepSlapGame() {
     });
     sim.flyer = flyer;
     setActiveFlyerHead(flyer.headKey);
-    audioRef.current?.playCruisingLine();
+    if (playVoice) {
+      audioRef.current?.playCruisingLine();
+    }
   }, []);
 
   const spawnConfettiBurst = useCallback((x: number, y: number) => {
@@ -175,6 +177,7 @@ export default function SleepSlapGame() {
   const startGame = useCallback(() => {
     audioRef.current?.stopAllVoices();
     audioRef.current?.unlock();
+    audioRef.current?.playGameStart();
     audioRef.current?.startBgm();
     const sim = simRef.current;
     sim.score = 0;
@@ -198,7 +201,16 @@ export default function SleepSlapGame() {
       document.activeElement.blur();
     }
 
-    spawnNextFlyer(0);
+    spawnNextFlyer(0, false);
+    setTimeout(() => {
+      if (
+        simRef.current.status === 'playing' &&
+        simRef.current.flyer &&
+        !simRef.current.flyer.knockedOut
+      ) {
+        audioRef.current?.playCruisingLine();
+      }
+    }, 1300);
   }, [spawnNextFlyer]);
 
   const resetToTitle = useCallback(() => {

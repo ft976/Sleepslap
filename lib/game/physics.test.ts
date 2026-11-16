@@ -10,6 +10,7 @@ import {
   BGM_MAX_GAP_MS,
   BGM_MIN_GAP_MS,
   BGM_VOLUME,
+  HIT_AHH_VOLUME,
   KNOCKOUT_DURATION_MS,
   MAX_AIM_ANGLE_DEG,
   applyMissOutcome,
@@ -144,7 +145,7 @@ test('best score persistence reads and writes cleanly', () => {
 });
 
 
-test('AUDIO_MANIFEST contains all 8 cruising lines, slap SFX, hit punchline, and miss reaction', () => {
+test('AUDIO_MANIFEST contains all 8 cruising lines, slap SFX, hit punchline, miss reaction, gamestart audio, and gameover audio', () => {
   assert.equal(CRUISING_KEYS.length, 8);
   for (const key of CRUISING_KEYS) {
     assert.ok(AUDIO_MANIFEST[key].filename.endsWith('.mp3'));
@@ -153,6 +154,10 @@ test('AUDIO_MANIFEST contains all 8 cruising lines, slap SFX, hit punchline, and
   assert.equal(AUDIO_MANIFEST.slap_sfx.filename, 'slap_sfx.mp3');
   assert.equal(AUDIO_MANIFEST.hit_punchline.script, 'Are maiya!');
   assert.equal(AUDIO_MANIFEST.miss_reaction.script, 'Chal chal chal!');
+  assert.equal(AUDIO_MANIFEST.gamestart_audio.filename, 'bharva_hai.mp3');
+  assert.equal(AUDIO_MANIFEST.gamestart_audio.script, 'Bharva hai!');
+  assert.equal(AUDIO_MANIFEST.gameover_audio.filename, 'myinstants-1_mGuxDlT2_9e7c8496.mp3');
+  assert.equal(AUDIO_MANIFEST.gameover_audio.script, 'Oye betichod so gaya...');
 });
 
 test('matchAudioFilenameToKey maps manifest filenames and common aliases cleanly', () => {
@@ -163,9 +168,13 @@ test('matchAudioFilenameToKey maps manifest filenames and common aliases cleanly
   assert.equal(matchAudioFilenameToKey('hit_punchline.wav'), 'hit_punchline');
   assert.equal(matchAudioFilenameToKey('miss_reaction.mp3'), 'miss_reaction');
   assert.equal(
-    matchAudioFilenameToKey('mkb_amitabh_bachchan_fa595f97.mp3'),
+    matchAudioFilenameToKey('myinstants-1_mguxdlt2_9e7c8496.mp3'),
     'gameover_audio'
   );
+  assert.equal(matchAudioFilenameToKey('bharva-hai.mp3'), 'gamestart_audio');
+  assert.equal(matchAudioFilenameToKey('game_over.mp3'), 'gameover_audio');
+  assert.equal(matchAudioFilenameToKey('loose_ending.mp3'), 'gameover_audio');
+  assert.equal(matchAudioFilenameToKey('game_start.mp3'), 'gamestart_audio');
   assert.equal(matchAudioFilenameToKey('readme.txt'), null);
 });
 
@@ -192,8 +201,10 @@ test('BGM playlist contains all 7 Myinstants tracks configured with appropriate 
     assert.ok(track.endsWith('.mp3'));
   }
 
-  // Volume must be noticeably softer than main SFX (0.95)
-  assert.ok(BGM_VOLUME >= 0.3 && BGM_VOLUME <= 0.45);
+  // Volume increased as requested to around ~0.52
+  assert.ok(BGM_VOLUME >= 0.45 && BGM_VOLUME <= 0.65);
+  // Hit "ah" sound decreased as requested to around ~0.42
+  assert.ok(HIT_AHH_VOLUME <= 0.50);
 
   // Gap between tracks must strictly range from 2000ms to 4000ms
   assert.equal(BGM_MIN_GAP_MS, 2000);

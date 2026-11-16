@@ -20,6 +20,7 @@ export type AudioKey =
   | 'slap_sfx'
   | 'hit_punchline'
   | 'miss_reaction'
+  | 'gamestart_audio'
   | 'gameover_audio';
 
 export const BGM_TRACKS = [
@@ -35,7 +36,7 @@ export const BGM_TRACKS = [
 export interface AudioManifestEntry {
   key: AudioKey;
   filename: string;
-  category: 'cruising' | 'hit' | 'miss' | 'gameover';
+  category: 'cruising' | 'hit' | 'miss' | 'gameover' | 'gamestart';
   label: string;
   script: string;
 }
@@ -121,12 +122,19 @@ export const AUDIO_MANIFEST: Record<AudioKey, AudioManifestEntry> = {
     label: 'Miss Reaction Voice Line',
     script: 'Chal chal chal!',
   },
+  gamestart_audio: {
+    key: 'gamestart_audio',
+    filename: 'bharva_hai.mp3',
+    category: 'gamestart',
+    label: 'Tap to Play Game Start Audio',
+    script: 'Bharva hai!',
+  },
   gameover_audio: {
     key: 'gameover_audio',
-    filename: 'mkb_amitabh_bachchan_fa595f97.mp3',
+    filename: 'myinstants-1_mGuxDlT2_9e7c8496.mp3',
     category: 'gameover',
     label: 'Game Over (3 Misses) Audio',
-    script: 'Plays automatically when you miss 3 targets and lose',
+    script: 'Oye betichod so gaya...',
   },
 };
 

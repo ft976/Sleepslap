@@ -362,7 +362,8 @@
         slap_sfx: { filename: "slap_sfx.mp3", label: "Slap Impact SFX", script: "Loud slap / punch impact sound" },
         hit_punchline: { filename: "hit_punchline.mp3", label: "Hit Impact Voice Line", script: "Teri maa ka bhosda!" },
         miss_reaction: { filename: "miss_reaction.mp3", label: "Miss Reaction Voice Line", script: "Arre baap re!" },
-        gameover_audio: { filename: "mkb_amitabh_bachchan_fa595f97.mp3", label: "Game Over (3 Misses) Audio", script: "Plays automatically when you miss 3 targets and lose" }
+        gamestart_audio: { filename: "bharva_hai.mp3", label: "Game Start Audio", script: "Bharva hai!" },
+        gameover_audio: { filename: "myinstants-1_mGuxDlT2_9e7c8496.mp3", label: "Game Over (3 Misses) Audio", script: "Oye betichod so gaya..." }
       };
 
       const CRUISING_KEYS = [
@@ -379,7 +380,7 @@
         "/assets/audio/bgm/bgm_6_computer_ji.mp3",
         "/assets/audio/bgm/bgm_7_kyun_bane_crorepati.mp3"
       ];
-      const BGM_VOLUME = 0.38;
+      const BGM_VOLUME = 0.52;
       let activeBgmEl = null;
       let bgmTimeout = null;
       let bgmActive = false;
@@ -484,7 +485,8 @@
         slap_sfx: "/assets/audio/slap_sfx.wav",
         hit_punchline: "/assets/audio/hit_punchline.wav",
         miss_reaction: "/assets/audio/miss_reaction.wav",
-        gameover_audio: "/assets/aistudio/mkb_amitabh_bachchan_fa595f97.mp3"
+        gamestart_audio: "/assets/audio/bharva_hai.mp3",
+        gameover_audio: "/assets/aistudio/myinstants-1_mGuxDlT2_9e7c8496.mp3"
       };
       const customAudioUrls = {};
       let audioCtx = null;
@@ -514,6 +516,13 @@
         const url = customAudioUrls[key] || defaultAudioUrls[key];
         if (!url) return false;
         const el = new Audio(url);
+        if (key === "hit_punchline") {
+          el.volume = 0.42;
+        } else if (key === "slap_sfx") {
+          el.volume = 0.88;
+        } else {
+          el.volume = 0.95;
+        }
         if (isCruising) {
           stopCruisingAudio();
           activeCruisingEl = el;
@@ -845,8 +854,10 @@
           spin: 0
         };
         miniAvatarImg.src = headDataUrls[headKey];
-        const key = CRUISING_KEYS[Math.floor(Math.random() * CRUISING_KEYS.length)];
-        playCustomAudio(key, true);
+        if (playVoice) {
+          const key = CRUISING_KEYS[Math.floor(Math.random() * CRUISING_KEYS.length)];
+          playCustomAudio(key, true);
+        }
       }
 
       function checkHit(origin, deg) {
@@ -878,6 +889,7 @@
 
       function startGame() {
         unlockAudio();
+        playCustomAudio("gamestart_audio", false);
         startBgm();
         score = 0;
         misses = 0;
@@ -890,7 +902,13 @@
         titleScreen.classList.add("hidden");
         pauseOverlay.classList.add("hidden");
         gameoverOverlay.classList.add("hidden");
-        spawnFlyer();
+        spawnFlyer(false);
+        setTimeout(() => {
+          if (state === "playing" && flyer && !flyer.ko) {
+            const key = CRUISING_KEYS[Math.floor(Math.random() * CRUISING_KEYS.length)];
+            playCustomAudio(key, true);
+          }
+        }, 1300);
       }
 
       function resetGame() {

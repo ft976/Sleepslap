@@ -6,6 +6,7 @@ import {
 } from './types';
 import {
   BGM_VOLUME,
+  HIT_AHH_VOLUME,
   computeBgmGapMs,
   pickNextBgmIndex,
 } from './physics';
@@ -24,7 +25,8 @@ export class GameAudioEngine {
     slap_sfx: '/assets/audio/slap_sfx.wav',
     hit_punchline: '/assets/audio/hit_punchline.mp3',
     miss_reaction: '/assets/audio/miss_reaction.mp3',
-    gameover_audio: '/assets/aistudio/mkb_amitabh_bachchan_fa595f97.mp3',
+    gamestart_audio: '/assets/audio/bharva_hai.mp3',
+    gameover_audio: '/assets/aistudio/myinstants-1_mGuxDlT2_9e7c8496.mp3',
   };
   private customUrls: Partial<Record<AudioKey, string>> = {};
   private preloadedUrls: Set<string> = new Set();
@@ -266,7 +268,13 @@ export class GameAudioEngine {
 
     try {
       const audio = new Audio(sourceUrl);
-      audio.volume = key === 'slap_sfx' ? 0.95 : 0.95;
+      if (key === 'hit_punchline') {
+        audio.volume = HIT_AHH_VOLUME;
+      } else if (key === 'slap_sfx') {
+        audio.volume = 0.88;
+      } else {
+        audio.volume = 0.95;
+      }
       if (isCruising) {
         this.stopCruising();
         this.activeCruisingAudio = audio;
@@ -322,6 +330,12 @@ export class GameAudioEngine {
     if (!played) {
       this.synthWhoosh();
     }
+  }
+
+  public playGameStart(): void {
+    this.unlock();
+    if (this.muted) return;
+    this.playAudioFile('gamestart_audio', false);
   }
 
   public playGameOver(): void {
