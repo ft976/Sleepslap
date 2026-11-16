@@ -1,0 +1,6 @@
+{
+  "name": "Sleep Slap",
+  "description": "Mobile-first hand-drawn ink & cutout arcade slap game with aiming ray physics, starburst impacts, and customizable voice lines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
